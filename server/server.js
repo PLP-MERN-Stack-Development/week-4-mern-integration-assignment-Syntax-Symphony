@@ -1,33 +1,34 @@
-// server.js - Main server file for the MERN blog application
-
-// Import required modules
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+require('dotenv').config();
+const connectDB = require('./config/db');
+// ...setup express, middleware...
+connectDB();
 
 // Import routes
 const postRoutes = require('./routes/posts');
-const categoryRoutes = require('./routes/categories');
-const authRoutes = require('./routes/auth');
+// You can add authRoutes, categoryRoutes later similarly
 
-// Load environment variables
+// Load environment variables from .env file
 dotenv.config();
 
-// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middleware to allow cross-origin requests
 app.use(cors());
+
+// Middleware to parse JSON body data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
+// Serve static files from uploads (for images later)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Log requests in development mode
+// Log HTTP requests when in development mode
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
@@ -35,17 +36,15 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// API routes
+// Use the post routes at /api/posts
 app.use('/api/posts', postRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/auth', authRoutes);
 
-// Root route
+// Root route (just a test route)
 app.get('/', (req, res) => {
   res.send('MERN Blog API is running');
 });
 
-// Error handling middleware
+// Error handling middleware (catches errors and sends JSON response)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.statusCode || 500).json({
@@ -54,9 +53,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start server
-mongoose
-  .connect(process.env.MONGODB_URI)
+// Connect to MongoDB and start the server
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => {
@@ -68,11 +66,10 @@ mongoose
     process.exit(1);
   });
 
-// Handle unhandled promise rejections
+// Handle unhandled promise rejections gracefully
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
   process.exit(1);
 });
 
-module.exports = app; 
+module.exports = app;
